@@ -7,10 +7,10 @@ import random
 
 c = CrawlerProcess({
     'RETRY_HTTP_CODES': [403, 301],
-    'RETRY_TIMES': 12,
-    'CONCURRENT_REQUESTS_PER_DOMAIN': 50,
-    'CONCURRENT_REQUESTS_PER_IP': 50,
-    'CONCURRENT_REQUESTS': 50,
+    'RETRY_TIMES': 6,
+    'CONCURRENT_REQUESTS_PER_DOMAIN': 10,
+    'CONCURRENT_REQUESTS_PER_IP': 10,
+    'CONCURRENT_REQUESTS': 10,
     'PROXY_POOL_ENABLED': True,
     'HTTPCACHE_ENABLED': True,
     'DOWNLOADER_MIDDLEWARES': {
@@ -20,7 +20,7 @@ c = CrawlerProcess({
         'scrapy_proxy_pool.middlewares.BanDetectionMiddleware': 620,
     },
     'ROBOTSTXT_OBEY': False,
-    #'DOWNLOAD_DELAY': 0,
+    'DOWNLOAD_DELAY': 5,
     #'RANDOMIZE_DOWNLOAD_DELAY': 0,
     'COOKIES_ENABLED': False
 })
@@ -47,8 +47,8 @@ def crawl_locations_data(postal_code_list):
 
 
 def run_crawler():
-    #crawl_locations_href(get_94_postal_codes())
-    crawl_locations_data(get_94_postal_codes())
+    crawl_locations_href(get_94_postal_codes())
+    # crawl_locations_data(get_94_postal_codes())
     c.start()
 
 

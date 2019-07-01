@@ -1,10 +1,10 @@
 from Neo.Neo.database.db import get_locations_data_collection, get_locations_href_collection
 from Neo.Neo.utils.log import log_info
-from Neo.Neo.utils.math import get_interpolate_value
+from Neo.Neo.utils.math import plot, get_interpolate_value
 import statistics
 import operator
 
-MAX_Z_SCORE_AUTHORIZED = 1.75
+MAX_Z_SCORE_AUTHORIZED = 1
 
 
 def get_cleared_data_from_postal_code(postal_code):
@@ -20,10 +20,14 @@ def get_cleared_data_from_postal_code(postal_code):
                             # check the z-score of the location
                             price = (float(x["price"]) / float(x["square"]))
                             z_score = round((price - mean) / st_dev, 2)
-                            if z_score < MAX_Z_SCORE_AUTHORIZED:
+                            if abs(z_score) < MAX_Z_SCORE_AUTHORIZED:
                                 price_list.append((x["_id"],
                                                    float(x["price"]),
                                                    float(x["square"])))
+                                print(x["_id"],
+                                     float(x["price"]),
+                                     float(x["square"]),
+                                     z_score)
     return price_list
 
 
@@ -39,19 +43,6 @@ def get_mean_location_price_from_postal_code(postal_code):
              + "(Based on " + str(len(price_list)) + " goods)")
 
 
-def print_price_from_postal_code_and_square_meters(postal_code, square_meters):
-    price_list = get_cleared_data_from_postal_code(postal_code)
-    data_list = [i[1]/i[2] for i in price_list]
-    mean = statistics.mean(data_list)
-
-    log_info("Price for "
-             + str(square_meters)
-             + " m2 in "
-             + postal_code
-             + " (from mean price/square): "
-             + str(round(mean * square_meters, 2)) + " EUR.")
-
-
 def print_interpolated_price_from_postal_code_and_square_meters(postal_code, square_meters):
     price_list = get_cleared_data_from_postal_code(postal_code)
 
@@ -62,7 +53,7 @@ def print_interpolated_price_from_postal_code_and_square_meters(postal_code, squ
     y_list = [i[1] for i in data_list]
 
     y = get_interpolate_value(x_list, y_list, float(square_meters))
-    # plot(x_list, y_list)
+    plot(x_list, y_list)
 
     log_info("Interpolated value for "
              + str(square_meters)
@@ -97,5 +88,4 @@ def is_location_flagged(location):
     return False
 
 
-print_price_from_postal_code_and_square_meters("94230", 38)
-print_interpolated_price_from_postal_code_and_square_meters("94230", 38)
+print_interpolated_price_from_postal_code_and_square_meters("93160", 58)

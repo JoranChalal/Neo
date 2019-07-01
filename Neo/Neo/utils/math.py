@@ -1,27 +1,43 @@
 # Import the necessary libraries
-import numpy
+import operator
 import matplotlib.pyplot as plt
-from numpy.polynomial.polynomial import polyfit
+import numpy as np
+import math
+from scipy.optimize import curve_fit
+from sklearn.linear_model import LinearRegression
+from sklearn.preprocessing import PolynomialFeatures
 
 
-def get_interpolate_value(x_list, y_list, x):
-    # Fit with polyfit
-    b, m = polyfit(x_list, y_list, 1)
-    y = float(b) + float(m) * x
-    return y
+def get_interpolate_value(x_list, y_list, value):
+    x = np.array(x_list)
+    y = np.array(y_list)
+
+    fitting_parameters, covariance = curve_fit(exponential_fit, x, y)
+    a, b = fitting_parameters
+
+    return float(exponential_fit(value, a, b))
+
+
+def exponential_fit(x, a, b):
+    res = a * np.log(x) + b
+    if np.all(res < 0):
+        return 0
+    return res
 
 
 def plot(x_list, y_list):
-    plt.plot(x_list, y_list, 'ro')
+    x = np.array(x_list)
+    y = np.array(y_list)
 
-    # Fit with polyfit
-    b, m = polyfit(x_list, y_list, 1)
-    max_x = max(x_list) + 10
+    fitting_parameters, covariance = curve_fit(exponential_fit, x, y)
+    a, b = fitting_parameters
 
-    x_regression = numpy.arange(0, max_x, 0.5)
-    y_regression = float(b) + float(m) * x_regression
-    plt.plot(x_list, y_list, '.')
-    plt.plot(x_regression, y_regression, '-')
-    axes = plt.gca()
-    axes.set_xlim([0, max_x])
+    y_pred = []
+    x_pred = []
+    for i in range(0, 100):
+        x_pred.append(i)
+        y_pred.append(exponential_fit(i, a, b))
+
+    plt.plot(x_pred, y_pred, "-")
+    plt.plot(x, y, '.')
     plt.show()
