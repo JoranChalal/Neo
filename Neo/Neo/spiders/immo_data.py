@@ -4,10 +4,10 @@ from scrapy.http.request import Request
 from datetime import datetime
 import cssutils
 from Neo.Neo.utils.log import log_info
-from Neo.Neo.database.database import Location
+from Neo.Neo.database.database import Property
 
 
-class LocationsDataSpider(scrapy.Spider):
+class ImmoDataSpider(scrapy.Spider):
 
     name = 'locations_data'
     allowed_domains = ['leboncoin.fr']
@@ -37,37 +37,37 @@ class LocationsDataSpider(scrapy.Spider):
         # use lxml to get decent HTML parsing speed
         soup = BeautifulSoup(response.text, 'lxml')
         # all data
-        postal_code = LocationsDataSpider.get_location_postal_code(soup)
-        title = LocationsDataSpider.get_location_title(soup)
-        price = LocationsDataSpider.get_location_price(soup)
-        date = LocationsDataSpider.get_location_date(soup)
-        description = LocationsDataSpider.get_location_description(soup)
-        charges_included = LocationsDataSpider.get_location_charges_included(soup)
-        real_estate_type = LocationsDataSpider.get_location_real_estate_type(soup)
-        rooms = LocationsDataSpider.get_location_rooms(soup)
-        square = LocationsDataSpider.get_location_square(soup)
-        images = LocationsDataSpider.get_location_images(soup)
+        postal_code = ImmoDataSpider.get_location_postal_code(soup)
+        title = ImmoDataSpider.get_location_title(soup)
+        price = ImmoDataSpider.get_location_price(soup)
+        date = ImmoDataSpider.get_location_date(soup)
+        description = ImmoDataSpider.get_location_description(soup)
+        charges_included = ImmoDataSpider.get_location_charges_included(soup)
+        real_estate_type = ImmoDataSpider.get_location_real_estate_type(soup)
+        rooms = ImmoDataSpider.get_location_rooms(soup)
+        square = ImmoDataSpider.get_location_square(soup)
+        images = ImmoDataSpider.get_location_images(soup)
         full_url = str(response.meta['full_url'])
 
         log_info("Parsed : " + full_url)
 
-        location = (Location.select().where(Location.full_url == full_url)).first()
+        property = (Property.select().where(Property.full_url == full_url)).first()
 
-        if location.first_scraping_date == "":
-            location.first_scraping_date = datetime.now()
-        location.last_scraping_date = datetime.now()
-        location.postal_code = postal_code
-        location.title = title
-        location.price = price
-        location.date = date
-        location.description = description
-        location.charges_included = charges_included
-        location.real_estate_type = real_estate_type
-        location.rooms = rooms
-        location.square = square
-        location.images = images
-        location.full_url = full_url
-        location.save()
+        if property.first_scraping_date == "":
+            property.first_scraping_date = datetime.now()
+        property.last_scraping_date = datetime.now()
+        property.postal_code = postal_code
+        property.title = title
+        property.price = price
+        property.date = date
+        property.description = description
+        property.charges_included = charges_included
+        property.real_estate_type = real_estate_type
+        property.rooms = rooms
+        property.square = square
+        property.images = images
+        property.full_url = full_url
+        property.save()
 
         # print({"scraping_date": datetime.now(),
         #        "title": title,
@@ -103,7 +103,10 @@ class LocationsDataSpider(scrapy.Spider):
             price = item.span
             if price != "" and price is not None and price.get_text() != "":
                 print("Price : " + price.get_text())
-                return price.get_text().split()[0]
+                if len(price.get_text().split()) > 0:
+                    return float(price.get_text().split()[1])
+                else:
+                    return price.get_text().split()[0]
 
     @staticmethod
     def get_location_date(html):

@@ -1,6 +1,6 @@
-from Neo.Neo.database.db import get_locations_data_collection, get_locations_href_collection
 from Neo.Neo.utils.log import log_info
 from Neo.Neo.utils.math import plot, get_interpolate_value
+from Neo.Neo.database.database import Location
 import statistics
 import operator
 
@@ -11,23 +11,22 @@ def get_cleared_data_from_postal_code(postal_code):
     mean, st_dev = get_postal_code_z_score_data(postal_code)
 
     price_list = []
-    for item in get_locations_href_collection().find():
-        if item["_id"] == postal_code:
-            for href_item in item[postal_code]:
-                for x in get_locations_data_collection().find():
-                    if "https://www.leboncoin.fr" + href_item["href"] == x["_id"]:
-                        if is_location_flagged(x):
-                            # check the z-score of the location
-                            price = (float(x["price"]) / float(x["square"]))
-                            z_score = round((price - mean) / st_dev, 2)
-                            if abs(z_score) < MAX_Z_SCORE_AUTHORIZED:
-                                price_list.append((x["_id"],
-                                                   float(x["price"]),
-                                                   float(x["square"])))
-                                print(x["_id"],
-                                     float(x["price"]),
-                                     float(x["square"]),
-                                     z_score)
+
+    location_list = (Location.select().where(Location.postal_code == postal_code))
+    for location in location_list:
+            if is_location_flagged(location):
+                # check the z-score of the location
+                price = (float(location.price) / float(location.square))
+                z_score = round((price - mean) / st_dev, 2)
+                if abs(z_score) < MAX_Z_SCORE_AUTHORIZED:
+                    price_list.append((location.postal_code,
+                                       location.price,
+                                       location.square))
+                    print(location.postal_code,
+                         float(location.price),
+                         float(location.square),
+                         z_score,
+                         location.full_url)
     return price_list
 
 
@@ -65,13 +64,10 @@ def print_interpolated_price_from_postal_code_and_square_meters(postal_code, squ
 
 def get_postal_code_z_score_data(postal_code):
     price_list = []
-    for item in get_locations_href_collection().find():
-        if item["_id"] == postal_code:
-            for href_item in item[postal_code]:
-                for x in get_locations_data_collection().find():
-                    if "https://www.leboncoin.fr" + href_item["href"] == x["_id"]:
-                        if is_location_flagged(x):
-                            price_list.append(float(x["price"]) / float(x["square"]))
+    location_list = (Location.select().where(Location.postal_code == postal_code))
+    for item in location_list:
+        if is_location_flagged(item):
+            price_list.append(float(item.price) / float(item.square))
 
     mean = statistics.mean(price_list)
     st_dev = statistics.stdev(price_list)
@@ -79,13 +75,13 @@ def get_postal_code_z_score_data(postal_code):
 
 
 def is_location_flagged(location):
-    if location["price"] is None and location["square"] is None:
+    if location.price is None and location.square is None:
         return False
-    if "colocation" in location["description"] or "coloc" in location["description"]:
+    if "colocation" in location.description or "coloc" in location.description:
         return False
-    if float(location["price"]) > 1 and float(location["square"]) > 1:
+    if float(location.price) > 1 and float(location.square) > 1:
         return True
     return False
 
 
-print_interpolated_price_from_postal_code_and_square_meters("93160", 58)
+print_interpolated_price_from_postal_code_and_square_meters("94000", 35)
